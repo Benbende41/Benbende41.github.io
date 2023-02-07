@@ -1,0 +1,912 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>JS应知应会 | Gridea</title>
+<link rel="shortcut icon" href="https://benbende41.github.io/favicon.ico?v=1675781804134">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://benbende41.github.io/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="JS应知应会 | Gridea - Atom Feed" href="https://benbende41.github.io/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="js应知应会
+配置@路径
+vite.config.js
+import { defineConfig } from &quot;vite&quot;;
+import vue from &quot;@vitejs/plugin-vue&quot..." />
+    <meta name="keywords" content="" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.5.1/build/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://benbende41.github.io">
+  <img class="avatar" src="https://benbende41.github.io/images/avatar.png?v=1675781804134" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              JS应知应会
+            </h2>
+            <div class="post-info">
+              <span>
+                2022-12-29
+              </span>
+              <span>
+                17 min read
+              </span>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content" v-pre>
+                <h1 id="js应知应会">js应知应会</h1>
+<h2 id="配置路径">配置@路径</h2>
+<p>vite.config.js</p>
+<pre><code>import { defineConfig } from &quot;vite&quot;;
+import vue from &quot;@vitejs/plugin-vue&quot;;
+import { resolve } from &quot;path&quot;;
+import AutoImport from &quot;unplugin-auto-import/vite&quot;; //vue3自动导入
+import Components from &quot;unplugin-vue-components/vite&quot;;//组件自动导入
+import { ElementPlusResolver } from &quot;unplugin-vue-components/resolvers&quot;;//elementPlus组件自动导入
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [
+    vue(),
+    AutoImport({ imports: [&quot;vue&quot;, &quot;vue-router&quot;], dts: true }),
+    Components({
+      resolvers: [ElementPlusResolver()],
+    }),
+  ],
+  resolve: {
+    alias: {
+      &quot;@&quot;: resolve(__dirname, &quot;src&quot;), //路径别名
+    },
+    extensions: [&quot;.js&quot;, &quot;.json&quot;, &quot;.ts&quot;, &quot;.vue&quot;], //使用路径别名时想要省略的后缀名，可以自己增减
+  },
+});
+</code></pre>
+<h2 id="前后端实现动态路由">前后端实现动态路由</h2>
+<h2 id="开启后端服务器">开启后端服务器：</h2>
+<h3 id="总体思路">总体思路：</h3>
+<p>就是要根据前端用户的uid向后端发起请求，后端直接从表里取出来传给我们对应的路由父子级数据，再由前端整合成树</p>
+<p>koa2 npm i koa-generator -g</p>
+<p>koa project-name</p>
+<p>cd project-name</p>
+<p>npm i</p>
+<p>npm i koa2-cors -s 解决跨域插件</p>
+<p>npm run dev 启动后端服务器</p>
+<h3 id="后端实现动态路由mock模拟实现">后端实现动态路由（mock模拟实现）：</h3>
+<h4 id="路由权限">路由权限：</h4>
+<p>1/ uid-&gt;后端API - 路由权限API</p>
+<p>2/ 后端-&gt;用户对应路由权限列表-&gt;前端-&gt;JSON</p>
+<p>3/JSON-&gt;树形结构化</p>
+<p>4/属性结构化的数据-&gt;vue路由解构</p>
+<p>5/路由结构动态-&gt;静态路由</p>
+<p>6/树形结构化的数据-&gt;菜单组件</p>
+<p>[</p>
+<p>{</p>
+<p>id:2,</p>
+<p>pid:,</p>
+<p>path:,</p>
+<p>name:,</p>
+<p>link:,</p>
+<p>title:</p>
+<p>}</p>
+<p>]</p>
+<p>解决跨域(server)：</p>
+<pre><code>app.js
+const cors = require('koa2-cors')//引入解决跨域的插件
+
+//...
+
+
+app.use(cors({
+    origin:function(ctx){
+        return 'http://localhost:8080'
+}
+}))
+</code></pre>
+<p>获取请求人的uid</p>
+<pre><code>routes index.js
+
+
+router.get('/user_router_auth',async(ctx,next)=&gt;{
+    const{uid}=ctx.body.request
+    if(uid){
+    let authRouterInfo=[]
+    }else{
+    next()
+}
+})
+</code></pre>
+<p>模拟请求人的数据</p>
+<pre><code>//data -&gt; user.js
+moudle.exports=[
+    {
+    id:1,
+    name:'zhangsan',
+    auth:[]
+    },{
+    id:2,
+    name:'list',
+    auth:[]
+    },
+    {
+    id:3,
+    name:'list',
+    auth:[]
+    },
+
+]
+</code></pre>
+<h3 id="前端实现动态路由">前端实现动态路由：</h3>
+<h2 id="ajaxasync-javascript-and-xml">AJAX（async javascript and XML）</h2>
+<p>首先AJAX是为了实现不刷新整个页面也能获得服务器数据去通过javascript更新DOM，</p>
+<p>AJAX的通信流程，客户端创建xmlHttpRequest对象，通过对象中的数据，向互联网发送数据，再通过互联网到服务器，服务器根据对象响应数据到互联网再到客户端，客户端使用响应的数据通过js更新DOM</p>
+<pre><code>const xhr = new XMLHttpRequest()
+/**
+ * @params 请求方法
+ * @params 请求地址
+ * 
+ */
+
+
+xhr.onreadystatechange = (e) =&gt; { 
+    if (xhr.readyState === 4) { //整个请求完毕
+        if (xhr.status &gt;= 200 &amp;&amp; xhr.status &lt;= 300) {
+            console.log(xhr.responseText);//服务端返回的结果
+        } else if (xhr.status&gt;=400) { 
+            console.log('错误信息'+xhr.status);
+        }
+    }
+}
+
+xhr.open('get','http://xxxxxx')
+
+xhr.send()
+</code></pre>
+<ul>
+<li>
+<p><code>method</code>：表示当前的请求方式，常见的有<code>GET</code>、<code>POST</code></p>
+</li>
+<li>
+<p><code>url</code>：服务端地址</p>
+</li>
+<li>
+<p><code>async</code>：布尔值，表示是否异步执行操作，默认为<code>true</code></p>
+</li>
+<li>
+<p><code>user</code>: 可选的用户名用于认证用途；默认为`null</p>
+</li>
+<li>
+<p><code>password</code>: 可选的密码用于认证用途，默认为`null</p>
+</li>
+</ul>
+<p>通过xhr.readystate可以获得ajax响应的状态0(unsent),1(opended),2(header_recived),3(lofing),4(done)</p>
+<h3 id="封装ajax">封装ajax</h3>
+<pre><code>//封装一个ajax对象
+function ajax(options) { 
+    const xhr = new XMLHttpRequest()
+
+
+    //初始化参数内容
+    options = options || {}
+    options.type = (options.type || 'GET').toUpperCase()
+    options.dataType = options.dataType || 'json'
+    const params = options.data
+
+    //发送请求
+    if (options.type === 'GET') {
+        xhr.open('GET', options.url + '?' + params, true)//true 的意思是异步请求
+        xhr.send(null)
+    } else if (options.type ==='POST') { 
+        xhr.open('POST', options.url, true)
+        xhr.send(params)
+    }
+
+    //接收请求
+    xhr.onreadystatechange = (e) =&gt; { 
+        if (xhr.readyState===4) { 
+            let status = xhr.status
+            if (status &gt;= 200 &amp;&amp; status &lt;= 300) {
+               options.success &amp;&amp; options.success(xhr.responseText, xhr.responseXML)
+            } else { 
+               options.fail &amp;&amp; options.fail(status)
+            }
+        }
+    }
+}
+</code></pre>
+<h2 id="函数闭包">函数闭包</h2>
+<p>是什么：闭包可以让你在一个内层函数中访问到外层函数的作用域</p>
+<p>主要作用：创建私有变量，延长变量生命周期</p>
+<pre><code>function myname(){
+    let name= 'herbert'
+    function ca(){
+    alert(name)
+}
+ca()
+}
+</code></pre>
+<h3 id="函数柯里化">函数柯里化</h3>
+<pre><code>//计算面积
+
+function getArea(width){
+    return height=&gt;{
+    return height*width
+}
+}
+</code></pre>
+<p>如果不是某些特定任务需要闭包，在其他函数中创建函数是不明智的，应为必报的处理速度和内存消耗方面对脚本性能有负面影响</p>
+<h2 id="typeof-instanceof-objectprototypetostringcalldata">typeof instanceof Object.prototype.toString.call(data)</h2>
+<p>判断数据类型</p>
+<p>typeof可以判断简单数据类型但是判断null的时候会返回object这是远古bug</p>
+<p>instanceof可以判断复杂数据类型，是用于检测构造函数的prototype属性是否出现再某个实例对象的原型链上，可以准确的判断复杂引用数据类型，但是不能正确判断基础数据类型</p>
+<p>如果需要通用的检测数据类型可以采用Object.prototype.toString.call(data) 统一返回格式[object xxx]的字符串</p>
+<h2 id="事件代理事件委托">事件代理（事件委托）</h2>
+<p>通俗的讲，将一个元素响应事件的函数委托到另一个元素</p>
+<p>事件流的都会经过三个阶段：捕获阶段 -&gt; 目标阶段 -&gt; 冒泡阶段，而事件委托就是在冒泡阶段完成</p>
+<p>事件委托，会把一个或者一组元素的事件委托到它的父层或者更外层元素上，真正绑定事件的是外层元素，而不是目标元素</p>
+<p>当事件响应到目标元素上时，会通过事件冒泡机制从而触发它的外层元素的绑定事件上，然后在外层元素上去执行函数</p>
+<pre><code>const bBtn = document.getElementById(&quot;btn&quot;)
+const oUl = document.getElementById(&quot;ul1&quot;);
+const num=4
+
+//事件委托，添加子元素的事件
+oUl.onclick = function(ev){
+    ev=ev||window.event;
+    const target = ev.target || ev.srcElement
+    if(target.nodeName.toLowerCase == 'li'){
+        console.log('thr content is : ',target.innerHtml)
+}
+}
+
+//添加新节点
+oBtn.onclick=funtion(){
+    num++;
+    const oLi = document.createElement('li')
+    oLi.innerHtml=`item${num}`
+    oUl.appendChild(oLi)
+}
+</code></pre>
+<h2 id="new操作符具体都干了什么">new操作符具体都干了什么</h2>
+<ul>
+<li>
+<p>创建一个新的对象</p>
+</li>
+<li>
+<p>将对象与构造函数通过原型链连接起来</p>
+</li>
+<li>
+<p>将构造函数中的this绑定到新建的对象obj上</p>
+</li>
+<li>
+<p>根据构建函数返回类型做判断，如果是原始值则被忽略，如果是返回对象则需要正常处理</p>
+</li>
+</ul>
+<h2 id="事件循环">事件循环</h2>
+<p>宏任务和微任务，任务队列</p>
+<p>宏任务队列先执行，执行结束后判断有无微任务，如果有微任务就执行微任务，如果没有就开始执行新的宏任务</p>
+<h2 id="正则表达式">正则表达式</h2>
+<pre><code>const regxp = '/\d/g'
+</code></pre>
+<h2 id="call-bind-apply三者之间的区别">call bind apply三者之间的区别</h2>
+<ul>
+<li>
+<p>三者都可以改变函数的this指向</p>
+</li>
+<li>
+<p>三者第一个参数都是this要指向的对象，如果没有这个参数或者参数为null或undefined则默认指向全局window</p>
+</li>
+<li>
+<p>三者都可以传参，但是apply接收的数组，而call和bind都是参数列表，apply和call都是一次性传入参数，而bind可以分为多次传入</p>
+</li>
+<li>
+<p>bind 是返回绑定this之后的函数，apply,call则是立即执行</p>
+</li>
+</ul>
+<h2 id="dom理解以及常见操作">DOM理解以及常见操作</h2>
+<p>文档对象模型 是HTML和XML文档的编程接口，定义了一种方式让我们可以从程序中对文档结构进行访问，从而改变文档结构，样式以及内容</p>
+<p>元素节点 ，文本节点，属性节点</p>
+<h3 id="dom操作">DOM操作</h3>
+<h4 id="创建节点">创建节点</h4>
+<ul>
+<li>创建一个元素节点</li>
+</ul>
+<p>document.createElement('div')</p>
+<ul>
+<li>创建一个文本节点</li>
+</ul>
+<p>document.createTextNode(&quot;content&quot;)</p>
+<ul>
+<li>创建文档碎片 （createDocumentFragment）</li>
+</ul>
+<p>用来创建一个文档碎片，表示一种轻量级的文档，主要是用来存储临时节点，然后把文档碎片的内容一次性添加到DOM中</p>
+<p>document.createDocumentFrament()</p>
+<ul>
+<li>
+<p>创建属性节点</p>
+<p>document.createAttribute('custom')</p>
+</li>
+</ul>
+<h4 id="获取节点">获取节点</h4>
+<ul>
+<li>
+<p>querySeletor</p>
+</li>
+<li>
+<p>querySeletorAll</p>
+</li>
+</ul>
+<h4 id="更新节点">更新节点</h4>
+<ul>
+<li>innerHTML</li>
+</ul>
+<p>不但可以修改一个DOM节点的文本内容，还可以直接通过HTML代码片段来修改DOM节点内部的子树</p>
+<ul>
+<li>
+<p>innerText</p>
+</li>
+<li>
+<p>textContent</p>
+<p>自动对字符串进行html编码，保证无法设置任何HTML标签</p>
+<p>两者的区别在于读取属性时，innerText不反悔隐藏元素的文本，而textContent返回所有文本</p>
+</li>
+</ul>
+<h4 id="添加节点">添加节点</h4>
+<ul>
+<li>
+<p>innerHTML</p>
+</li>
+<li>
+<p>appendChild</p>
+<p>把一个子节点添加到父节点的最后一个子节点</p>
+</li>
+<li>
+<p>setAttribute</p>
+<p>再指定元素中添加一个属性节点，如果有值则覆盖</p>
+</li>
+</ul>
+<h4 id="删除节点">删除节点</h4>
+<p>父节点.removeChild()</p>
+<h2 id="递归和尾递归">递归和尾递归</h2>
+<p>在数学与计算机科学中，是指在函数的定义中使用函数自身的方法</p>
+<p>在函数内部可以调用其他函数，如果一个函数在内部调用自身，这个函数就是递归函数</p>
+<p>一般来说递归需要有边界条件，递归前进阶段和递归返回阶段，当边界条件不满足时，递归前进，边界条件满足时递归返回</p>
+<ul>
+<li>
+<p>尾递归</p>
+<p>在尾部调用函数自身</p>
+<p>可通过优化，使得计算仅占用常量栈空间</p>
+</li>
+</ul>
+<h2 id="axios的二次封装">Axios的二次封装</h2>
+<p>axios是一个轻量的http客户端</p>
+<p>基于XMLHttpRequest服务来执行http请求，支持Promise,支持浏览器和node端</p>
+<p>特性</p>
+<ul>
+<li>
+<p>从浏览器中创建XMLHttpRequest</p>
+</li>
+<li>
+<p>从node.js创建http请求</p>
+</li>
+<li>
+<p>支持PromiseAPI</p>
+</li>
+<li>
+<p>拦截请求和响应</p>
+</li>
+<li>
+<p>转换请求数据和响应数据</p>
+</li>
+<li>
+<p>取消请求</p>
+</li>
+<li>
+<p>自动转换JSON数据</p>
+</li>
+<li>
+<p>客户端支持防御XSRF</p>
+</li>
+</ul>
+<h3 id="发送请求">发送请求</h3>
+<pre><code>//项目中安装
+yarn add axios -S
+
+
+//导入
+import axios from 'axios'
+
+
+//发送请求、
+axios({
+    url:'xxx',//设置请求的地址
+    method:'GET',//设置请求的方法
+    params:{ //get请求使用params进行参数凭借，如果是post请求用data
+     type:'',
+     page:1   
+    }
+}).then(res=&gt;{
+    console.log(res)
+})
+</code></pre>
+<h3 id="并发请求">并发请求</h3>
+<p>axios.all([])</p>
+<pre><code>function getUserAccount(){
+    return axios.get('/user/123456')
+}
+
+
+function getUserPermissions(){
+    return axios.get('/user/123456/permissions')
+}
+
+
+axios.all([getUserAccount(),getUserPermissions()]).then(axios.spread(function(res1,res2){
+    //res1第一个请求返回的内容，res2第二个请求返回的内容
+    //两个请求都执行完成才会执行
+}))
+</code></pre>
+<h3 id="为什么要封装axios">为什么要封装axios</h3>
+<p>axios的API很友好，你完全可以很轻松的在项目中直接使用</p>
+<p>不过随着项目规模的增大。如果每发起一次http请求，就要把这些比如设置超时事件，设置请求头，根据项目环境判断使用哪个请求地址，错误的处理等等操作都需要写一遍</p>
+<p>这种重复劳动不仅浪费时间而且让代码变得冗余，难以维护。为了提高我们的代码质量，我们应该在项目中二次封装一下axios再使用</p>
+<pre><code>axios('http://localhost:3000/data',{
+    //配置代码
+    method:'GET',
+    timeout:1000,
+    withCredentials:true,
+    headers:{
+        'Content-Type':'application/json',
+        Authorization:'xxx'    
+    },
+    transformRequest:[function (data,headers){
+    return data
+    }],
+    //其他请求配置
+}).then(data=&gt;{
+    //todo:真正的逻辑代码
+    console.log(data)
+}).catch(err=&gt;{
+    //错误处理代码
+    if（err.response.status===401）{
+        // handle authorization error 认证错误
+    }
+    if(err.response.status === 403){
+        // handle server forbidden error 服务器错误
+    }
+
+    //其他错误处理。。。
+})
+</code></pre>
+<h3 id="如何二次封装axios">如何二次封装axios</h3>
+<p>封装的同时，你需要和后端协商一些约定，请求头，状态码，请求超过时间等等</p>
+<ul>
+<li>
+<p>设置接口请求前缀：根据开发，测试，生产环境的不同，前缀往往需要加以区分</p>
+</li>
+<li>
+<p>请求头：来实现一些具体的业务，必须携带一些参数才可以请求（例如：会员业务）</p>
+</li>
+<li>
+<p>状态码：根据接口返回不同的status，来执行不同的业务，这需要和后端约定好</p>
+</li>
+<li>
+<p>请求方法：根据get,post等方法进行一个再次封装，使用起来方便</p>
+</li>
+<li>
+<p>请求拦截器：根据请求的请求头设定，来决定那些请求可以访问</p>
+</li>
+<li>
+<p>响应拦截器：这块就是根据后端返回来的状态码判定执行不同的业务</p>
+</li>
+</ul>
+<h4 id="设置接口请求前缀">设置接口请求前缀</h4>
+<p>利用node环境变量来作判断，用来区分开发，测试，生产环境</p>
+<pre><code>if(process.env.NODE_ENV==='development'){
+    axios.defaults.baseURL='http://dev.xxx.com'
+}else if(process.env.NODE_ENV==='production'){
+    axios.defaults.baseURL='http://prod.xxx.com'
+}
+</code></pre>
+<p>在本地调试的时候，还需要在vue.config.js文件中配置<strong>devServer</strong>实现代理转发，或者vite.config.js中配置<strong>proxy</strong> 从而实现跨域</p>
+<pre><code>devServer:{
+    proxy:{
+    '/proxyApi':{
+        target:'http://dev.xxx.com',
+        changeOrigin:true,
+    pathRewrite:{
+    '/proxyApi':''
+        }
+      }
+   }
+}
+</code></pre>
+<h4 id="设置请求头与超时时间">设置请求头与超时时间</h4>
+<p>大部分情况下，请求头都是固定的，只有少部分情况会需要一些特殊的请求头，这里将普适性的请求头作为基础配置，当需要特殊请求头时，将特殊请求头作为参数传入，覆盖基础配置</p>
+<pre><code>// 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
+
+const service = axios.create({
+    ...
+    timeout:30000,//请求30s超时    
+    headers:{
+        get:{
+            'Content-Type':'application/x-www-form-urlencoded;charset=utf-8'
+            //在开发中，一般还需要打你但登录或者其他功能通用的请求头，可以一并配置进来
+        }，
+        post:{
+            'Content-Type':'application/json;charset=utf-8'
+        }
+    }
+})
+</code></pre>
+<h4 id="封装请求方法">封装请求方法</h4>
+<p>先引入封装好的方法，在要调用的接口重新封装一个方法暴露出去</p>
+<pre><code>//get 请求
+export function httpGet({
+    url,
+    params={}
+}){
+    return new Promise((resolve,reject)=&gt;{
+        axios.get(url,{
+        params
+    }).then(res=&gt;{
+        resolve(res.data)
+    }).catch(err=&gt;{
+    reject(err)
+    })
+    })
+}
+
+
+
+// post
+// post请求
+export function httpPost({
+  url,
+  data = {},
+  params = {}
+}) {
+  return new Promise((resolve, reject) =&gt; {
+    axios({
+      url,
+      method: 'post',
+      transformRequest: [function (data) {
+        let ret = ''
+        for (let it in data) {
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&amp;'
+        }
+        return ret
+      }],
+      // 发送的数据
+      data,
+      // url参数
+      params
+
+    }).then(res =&gt; {
+      resolve(res.data)
+    })
+  })
+}
+</code></pre>
+<p>把封装的方法放在一个api.js文件中</p>
+<pre><code>import {httpGrt,httpPost} from './http'
+export const getorglist = (params={})=&gt;httpGet({url:'apps/api/org/list',params})
+</code></pre>
+<p>页面中就能直接调用</p>
+<pre><code>//.vue
+import {getorglist} from '@/assets/js/api'
+
+
+getorglist({id:200}).then(res=&gt;{
+    console.log(res)
+})
+</code></pre>
+<p>这样可以把api统一管理起来，以后维护修改只需要在api.js文件操作即可</p>
+<h4 id="请求拦截器">请求拦截器</h4>
+<p>请求拦截器可以在每个请求里加上token,做了同意处理后维护起来也方便</p>
+<pre><code>//请求拦截器
+axios.interceptors.request.use(
+    cpnfig=&gt;{
+    //每次发送请求之前判断是否存在token
+    //如果存在，则同意在http请求的header都加上token,这样后台根据token判断你的登陆情况,此处token一般是用户登陆后存储到localstorage里的
+    token  &amp;&amp; (config.headers.Authorization=token)
+    return config
+    },
+    error =&gt;{
+    reyurn Promise.error(error)
+    }
+)
+</code></pre>
+<h4 id="响应拦截器">响应拦截器</h4>
+<p>响应拦截器可以在接受到响应后先做一层操作，如根据状态码判断登录状态，授权</p>
+<pre><code>//响应拦截器
+axios.interceptors.response.use(response=&gt;{
+    //如果返回的状态码为200，说明接口请求成功，可以正常拿到数据
+    //否则的话抛出错误
+    if(response.status===200){
+        if(response.data.code ===511){
+            //未授权调取授权接口
+        }else if(response.data.code===510){
+            //未登录跳转登录页
+        }else{
+            return Promise.resolve(response)
+        }
+    }else{
+        return Promise.reject(response)
+    }
+},error=&gt;{
+    //我们可以在这里对异常状态作统一处理
+    if(error.response.status){
+    //处理请求失败的情况
+    //对不同的返回码做相应的处理
+    return Promise.reject(error.response)
+    }
+})
+</code></pre>
+<h4 id="小结">小结</h4>
+<ul>
+<li>
+<p>封装是编程中很有意义的手段，简单的axios封装，就可以让我们领略到它的魅力</p>
+</li>
+<li>
+<p>封装axios没有一个绝对的标准，只要你的封装可以满足你的项目需求，并且用起来很方便，那就是一个好的封装方案</p>
+</li>
+</ul>
+<h2 id="js中本地存储的方式有哪些区别以及应用场景">JS中本地存储的方式有哪些，区别以及应用场景</h2>
+<h3 id="方式">方式</h3>
+<ul>
+<li>
+<p>cookie</p>
+</li>
+<li>
+<p>sessionStorage</p>
+</li>
+<li>
+<p>localStorage</p>
+</li>
+<li>
+<p>indexedDB</p>
+</li>
+</ul>
+<h4 id="cookie">cookie</h4>
+<p>类型为<strong>小型文本文件</strong>，指某些网站为了辨别用户身份而储存在用户本地终端上的数据。是为了解决HTTP无状态导致的问题</p>
+<p>作为一段一般不超过4kb的小型文本数据，它由一个名称（Name）,一个值（Value）和其他几个用于控制cookie有效期，安全性，适用范围的可选属性组成</p>
+<p>但是cookie在每次请求中都会被发送，如果不使用HTTPS对其加密，其保存的信息很容易被窃取，导致安全风险</p>
+<h1 id="css-应知应会">css 应知应会</h1>
+<h2 id="如何将超出部分进行省略号省略">如何将超出部分进行省略号省略</h2>
+<pre><code>*{
+      display: -webkit-box;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+}
+</code></pre>
+<h2 id="如何实现边框从中间向两边动画过渡得效果">如何实现边框从中间向两边动画过渡得效果</h2>
+<pre><code>.nav {
+    width: 130px;
+    height: 40px;
+    text-align: center;
+    line-height: 40px;
+    position: relative;
+
+  }
+  //移动端没有hover,所以看不到hover得效果
+   .nav::before{
+      content: &quot;&quot;;
+      display: block;
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      width: 0%;
+      height: 3px;
+      border-radius: 3px;
+      background-color: rgb(212, 60, 51);
+      transition: .3s ease;
+    }
+    .nav:hover::before{
+      width: 100%;
+      left: 0;
+    }
+</code></pre>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li><a href="#js%E5%BA%94%E7%9F%A5%E5%BA%94%E4%BC%9A">js应知应会</a>
+<ul>
+<li><a href="#%E9%85%8D%E7%BD%AE%E8%B7%AF%E5%BE%84">配置@路径</a></li>
+<li><a href="#%E5%89%8D%E5%90%8E%E7%AB%AF%E5%AE%9E%E7%8E%B0%E5%8A%A8%E6%80%81%E8%B7%AF%E7%94%B1">前后端实现动态路由</a></li>
+<li><a href="#%E5%BC%80%E5%90%AF%E5%90%8E%E7%AB%AF%E6%9C%8D%E5%8A%A1%E5%99%A8">开启后端服务器：</a>
+<ul>
+<li><a href="#%E6%80%BB%E4%BD%93%E6%80%9D%E8%B7%AF">总体思路：</a></li>
+<li><a href="#%E5%90%8E%E7%AB%AF%E5%AE%9E%E7%8E%B0%E5%8A%A8%E6%80%81%E8%B7%AF%E7%94%B1mock%E6%A8%A1%E6%8B%9F%E5%AE%9E%E7%8E%B0">后端实现动态路由（mock模拟实现）：</a>
+<ul>
+<li><a href="#%E8%B7%AF%E7%94%B1%E6%9D%83%E9%99%90">路由权限：</a></li>
+</ul>
+</li>
+<li><a href="#%E5%89%8D%E7%AB%AF%E5%AE%9E%E7%8E%B0%E5%8A%A8%E6%80%81%E8%B7%AF%E7%94%B1">前端实现动态路由：</a></li>
+</ul>
+</li>
+<li><a href="#ajaxasync-javascript-and-xml">AJAX（async javascript and XML）</a>
+<ul>
+<li><a href="#%E5%B0%81%E8%A3%85ajax">封装ajax</a></li>
+</ul>
+</li>
+<li><a href="#%E5%87%BD%E6%95%B0%E9%97%AD%E5%8C%85">函数闭包</a>
+<ul>
+<li><a href="#%E5%87%BD%E6%95%B0%E6%9F%AF%E9%87%8C%E5%8C%96">函数柯里化</a></li>
+</ul>
+</li>
+<li><a href="#typeof-instanceof-objectprototypetostringcalldata">typeof instanceof Object.prototype.toString.call(data)</a></li>
+<li><a href="#%E4%BA%8B%E4%BB%B6%E4%BB%A3%E7%90%86%E4%BA%8B%E4%BB%B6%E5%A7%94%E6%89%98">事件代理（事件委托）</a></li>
+<li><a href="#new%E6%93%8D%E4%BD%9C%E7%AC%A6%E5%85%B7%E4%BD%93%E9%83%BD%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88">new操作符具体都干了什么</a></li>
+<li><a href="#%E4%BA%8B%E4%BB%B6%E5%BE%AA%E7%8E%AF">事件循环</a></li>
+<li><a href="#%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F">正则表达式</a></li>
+<li><a href="#call-bind-apply%E4%B8%89%E8%80%85%E4%B9%8B%E9%97%B4%E7%9A%84%E5%8C%BA%E5%88%AB">call bind apply三者之间的区别</a></li>
+<li><a href="#dom%E7%90%86%E8%A7%A3%E4%BB%A5%E5%8F%8A%E5%B8%B8%E8%A7%81%E6%93%8D%E4%BD%9C">DOM理解以及常见操作</a>
+<ul>
+<li><a href="#dom%E6%93%8D%E4%BD%9C">DOM操作</a>
+<ul>
+<li><a href="#%E5%88%9B%E5%BB%BA%E8%8A%82%E7%82%B9">创建节点</a></li>
+<li><a href="#%E8%8E%B7%E5%8F%96%E8%8A%82%E7%82%B9">获取节点</a></li>
+<li><a href="#%E6%9B%B4%E6%96%B0%E8%8A%82%E7%82%B9">更新节点</a></li>
+<li><a href="#%E6%B7%BB%E5%8A%A0%E8%8A%82%E7%82%B9">添加节点</a></li>
+<li><a href="#%E5%88%A0%E9%99%A4%E8%8A%82%E7%82%B9">删除节点</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E9%80%92%E5%BD%92%E5%92%8C%E5%B0%BE%E9%80%92%E5%BD%92">递归和尾递归</a></li>
+<li><a href="#axios%E7%9A%84%E4%BA%8C%E6%AC%A1%E5%B0%81%E8%A3%85">Axios的二次封装</a>
+<ul>
+<li><a href="#%E5%8F%91%E9%80%81%E8%AF%B7%E6%B1%82">发送请求</a></li>
+<li><a href="#%E5%B9%B6%E5%8F%91%E8%AF%B7%E6%B1%82">并发请求</a></li>
+<li><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%B0%81%E8%A3%85axios">为什么要封装axios</a></li>
+<li><a href="#%E5%A6%82%E4%BD%95%E4%BA%8C%E6%AC%A1%E5%B0%81%E8%A3%85axios">如何二次封装axios</a>
+<ul>
+<li><a href="#%E8%AE%BE%E7%BD%AE%E6%8E%A5%E5%8F%A3%E8%AF%B7%E6%B1%82%E5%89%8D%E7%BC%80">设置接口请求前缀</a></li>
+<li><a href="#%E8%AE%BE%E7%BD%AE%E8%AF%B7%E6%B1%82%E5%A4%B4%E4%B8%8E%E8%B6%85%E6%97%B6%E6%97%B6%E9%97%B4">设置请求头与超时时间</a></li>
+<li><a href="#%E5%B0%81%E8%A3%85%E8%AF%B7%E6%B1%82%E6%96%B9%E6%B3%95">封装请求方法</a></li>
+<li><a href="#%E8%AF%B7%E6%B1%82%E6%8B%A6%E6%88%AA%E5%99%A8">请求拦截器</a></li>
+<li><a href="#%E5%93%8D%E5%BA%94%E6%8B%A6%E6%88%AA%E5%99%A8">响应拦截器</a></li>
+<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#js%E4%B8%AD%E6%9C%AC%E5%9C%B0%E5%AD%98%E5%82%A8%E7%9A%84%E6%96%B9%E5%BC%8F%E6%9C%89%E5%93%AA%E4%BA%9B%E5%8C%BA%E5%88%AB%E4%BB%A5%E5%8F%8A%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF">JS中本地存储的方式有哪些，区别以及应用场景</a>
+<ul>
+<li><a href="#%E6%96%B9%E5%BC%8F">方式</a>
+<ul>
+<li><a href="#cookie">cookie</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#css-%E5%BA%94%E7%9F%A5%E5%BA%94%E4%BC%9A">css 应知应会</a>
+<ul>
+<li><a href="#%E5%A6%82%E4%BD%95%E5%B0%86%E8%B6%85%E5%87%BA%E9%83%A8%E5%88%86%E8%BF%9B%E8%A1%8C%E7%9C%81%E7%95%A5%E5%8F%B7%E7%9C%81%E7%95%A5">如何将超出部分进行省略号省略</a></li>
+<li><a href="#%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E8%BE%B9%E6%A1%86%E4%BB%8E%E4%B8%AD%E9%97%B4%E5%90%91%E4%B8%A4%E8%BE%B9%E5%8A%A8%E7%94%BB%E8%BF%87%E6%B8%A1%E5%BE%97%E6%95%88%E6%9E%9C">如何实现边框从中间向两边动画过渡得效果</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://benbende41.github.io/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

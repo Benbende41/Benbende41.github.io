@@ -1,0 +1,928 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://benbende41.github.io</id>
+    <title>Gridea</title>
+    <updated>2023-02-07T14:56:47.915Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://benbende41.github.io"/>
+    <link rel="self" href="https://benbende41.github.io/atom.xml"/>
+    <subtitle>温故而知新</subtitle>
+    <logo>https://benbende41.github.io/images/avatar.png</logo>
+    <icon>https://benbende41.github.io/favicon.ico</icon>
+    <rights>All rights reserved 2023, Gridea</rights>
+    <entry>
+        <title type="html"><![CDATA[VUE3]]></title>
+        <id>https://benbende41.github.io/post/vue3/</id>
+        <link href="https://benbende41.github.io/post/vue3/">
+        </link>
+        <updated>2023-02-07T13:15:15.000Z</updated>
+        <content type="html"><![CDATA[<p>VUE3</p>
+<h2 id="虚拟dom和diff算法">虚拟DOM和Diff算法</h2>
+<p>虚拟Dom就是通过JS来生成一个AST（抽象语法树）节点树</p>
+<ul>
+<li>
+<p>在ts转js的时候也会进行一个AST的转换</p>
+</li>
+<li>
+<p>babel 在ES6转ES5的时候也会进行AST转换</p>
+</li>
+<li>
+<p>js 通过v8引擎转换字节码的时候也会进行一个AST转换</p>
+</li>
+</ul>
+<p><img src="https://benbende41.github.io/post-images/1675775968544.png" alt="" loading="lazy">#</p>
+<p>本质是使用js去描述dom对象</p>
+<p>通过下面的代码我们发现dom中的属性是非常多的</p>
+<pre><code class="language-js">let div = document.createElement('div')
+let str= ''
+for(const key in div){
+    str+=key+' '
+}
+
+console.log(str)
+</code></pre>
+<p>打印出来的属性，有如下图所示的这么多</p>
+<figure data-type="image" tabindex="1"><img src="https://benbende41.github.io/post-images/1675776001020.png" alt="" loading="lazy"></figure>
+<h3 id="diff算法源码">diff算法源码</h3>
+<p>在尤大的github中下载源码</p>
+<p>找到其中的runtime-core&gt;src&gt;renderer.ts</p>
+<p>diff算法一共分两种情况</p>
+<figure data-type="image" tabindex="2"><img src="https://benbende41.github.io/post-images/1675776013133.png" alt="" loading="lazy"></figure>
+<ul>
+<li>没有key</li>
+</ul>
+<figure data-type="image" tabindex="3"><img src="https://benbende41.github.io/post-images/1675776019220.png" alt="" loading="lazy"></figure>
+<p>首先会生成两个vnode 一个是旧的一个是新的</p>
+<p>一共会进行三步</p>
+<p>首先无key的新的元素会把旧的元素patch掉</p>
+<p>第二步 发现有多的元素就新增</p>
+<p>第三步 发现有少的元素就删除</p>
+<p>总的来说没有key的diff</p>
+<ul>
+<li>有key</li>
+</ul>
+<figure data-type="image" tabindex="4"><img src="https://benbende41.github.io/post-images/1675776025037.png" alt="" loading="lazy"></figure>
+<p>一共分为五步</p>
+<p>判断type和key是不是一样的</p>
+<p>第一步前序算法</p>
+<p>对比前面的是不是一样的</p>
+<p>不一样的会跳出循环</p>
+<p>进行尾序对比</p>
+<p>但是vue2会多进行一个交叉对比，vue3做了优化将交叉对比去除了做了最长递增子序列算法</p>
+<p>第三步新节点如果多出来就是挂载</p>
+<p>第四步旧节点如果多出来就是卸载</p>
+<p>第五步特殊情况乱序</p>
+<p>分为三小节</p>
+<p>5.1</p>
+<p>构建索引关系</p>
+<p>如果出现交叉进行最长递增子序列算法</p>
+<p>调用getSequnce()函数</p>
+<h2 id="ref全家桶及源码">Ref全家桶及源码</h2>
+<h3 id="ref">ref</h3>
+<p>会将变量变成响应式变量</p>
+<p>但是它实际上是一个类，在变量使用的时候，需要变量名.value.属性名才能做到属性的更改</p>
+<p>使用ref还可以直接获取到dom元素</p>
+<pre><code class="language-html">&lt;div ref=&quot;div&quot;&gt;这是一个div&lt;div/&gt;
+
+</code></pre>
+<pre><code class="language-js">const div = ref()
+
+
+console.log(div)//打印结果应该是&lt;div &gt;这是一个div&lt;div/&gt;这个dom元素
+</code></pre>
+<h3 id="shallowref">shallowRef</h3>
+<p>是一个浅层的响应式</p>
+<p>它的响应式只到.value直接去.value.属性名是不能在页面上直接渲染的</p>
+<p>必须要直接去修改.value的属性</p>
+<pre><code class="language-js">let people = shallowRef({
+    name:&quot;张三&quot;
+})
+
+
+people.value={
+    name:&quot;李四&quot;
+}
+
+//这样才能修改这个响应式变量
+</code></pre>
+<p>ref和shallowRef不能混用</p>
+<p>当混用时shallowRef就失去了浅层响应式的效果变成了深层响应式</p>
+<p>因为在混用ref的时候ref内部调用triggerRef()函数这个函数会影响shallowRef的响应式</p>
+<h3 id="customref">customRef</h3>
+<p>把收集依赖和触发依赖交给我们自己实现</p>
+<pre><code class="language-ts">function MyRef&lt;T&gt;(value:T){
+    return customRef((track,trigger)=&gt;{
+        return{
+            get(){
+                tarck()
+                return value
+},
+            set(newVal){
+                value = newVal
+                trigger()
+}
+}
+})
+}
+</code></pre>
+<p>对上面的代码简单写个防抖函数</p>
+<pre><code class="language-ts">    function MyRef&lt;T&gt;(value:T){
+        return customRef((track,trigger)=&gt;{
+            return{
+                get(){
+                    tarck()
+                    return value
+    },
+                set(newVal){
+                    clearTimeout(timer)
+                    timer = setTimeout(()=&gt;{
+                        value = newVal
+                         trigger()
+                        timer=null
+    },500)
+
+    }
+    }
+    })
+    }
+</code></pre>
+<h3 id="reactive">reactive</h3>
+<p>用来定义引用类型的响应式对象，这是和ref的一大区别</p>
+<p>并且reactive取值和赋值都不需要.value</p>
+<p>数组赋值不能直接覆盖，因为reactive定义过的引用类型是经过proxy代理的，如果直接覆盖会销毁掉proxy的代理从而失去响应式，解决方案调用数组方法push(...args)</p>
+<h3 id="readonly">readonly</h3>
+<p>将响应式对象变成只读</p>
+<pre><code class="language-ts">const people = reactive({
+    name:&quot;herbert&quot;
+})
+
+
+const read = readonly(people)
+</code></pre>
+<p>但是会受reactive影响</p>
+<h3 id="shallowreactive">shallowReactive</h3>
+<p>和shallowRef基本一样只到第一个属性</p>
+<p>也会受reactive的影响</p>
+<ul>
+<li>
+<p>插一嘴weakmap()因为reactiv源码中有用到</p>
+<ul>
+<li>
+<p>weakmap是es6新增的语法</p>
+</li>
+<li>
+<p>他要求对象的键必须是对象</p>
+</li>
+<li>
+<p>并且它的键不会被垃圾回收机制标记（因为它的键名所引用的对象都是弱引用），而是当它没有被引用会被自动清除</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="to系列全家桶">to系列全家桶</h2>
+<h3 id="toref">toRef</h3>
+<p>只能修改响应式对象的值，非响应式视图毫无变化</p>
+<p>toRef有两个参数，第一个是响应式对象，第二个是响应式对象的键</p>
+<p>一般是将响应式对象的某个值单独的给提出来</p>
+<h3 id="torefs">toRefs</h3>
+<p>手写源码</p>
+<pre><code class="language-ts">const toRefs=&lt;T extends object&gt;(object:T)=&gt;{
+    const map:any ={}
+    for(let key in object){
+        map[key] =toRef(object,key)
+    }
+    return map
+}
+</code></pre>
+<p>在解构reactive的时候要使用toRefs来进行解构不然就会失去响应式</p>
+<h3 id="toraw">toRaw</h3>
+<p>解除proxy代理</p>
+<h3 id="vue3的响应式原理">Vue3的响应式原理</h3>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[ES6中的Proxy]]></title>
+        <id>https://benbende41.github.io/post/es6-zhong-de-proxy/</id>
+        <link href="https://benbende41.github.io/post/es6-zhong-de-proxy/">
+        </link>
+        <updated>2023-02-06T01:31:59.000Z</updated>
+        <content type="html"><![CDATA[<figure data-type="image" tabindex="1"><img src="https://benbende41.github.io/post-images/1675647242635.png" alt="" loading="lazy"></figure>
+<h2 id="一介绍">一，介绍</h2>
+<h3 id="定义用于定义基本操作的自定义行为">定义：用于定义基本操作的自定义行为</h3>
+<h3 id="本质修改的是程序默认行为">本质：修改的是程序默认行为</h3>
+<p>就形同于在编程语言层面上做修改，属于元编程（meta programing）</p>
+<p>元编程（又译超编程，是指某类计算机程序的编写，这类计算机程序编写或操作其他程序（或者自身）作为他们的数据，或者在运行时王城部分本应在编译时完成的工作）</p>
+<ul>
+<li>
+<p>元编程的优点：与手动编写全部代码相比，程序员可以获得更高的工作效率，或者给与程序更大的灵活度去处理新的情形，而无需重新编译</p>
+</li>
+<li>
+<p>Proxy亦是如此，用于创建一个对象的代理，从而实现基本操作的拦截和自定义（如属性查找，赋值，枚举，函数调用等）</p>
+</li>
+</ul>
+<h3 id="二用法">二，用法</h3>
+<p>Proxy为构造函数，用来生成Proxy实例</p>
+<pre><code class="language-js">const proxy = new Proxy(target,handler)
+</code></pre>
+<h3 id="参数">参数</h3>
+<p><strong>target</strong>表示所要拦截的目标对象（任何类型的对象，包括原生数组，函数，甚至另一个代理）</p>
+<p><strong>handler</strong>通常以函数作为属性的对象，各属性中的函数分别定义了在执行各种操作时代理<strong>proxy</strong>的行为</p>
+<h3 id="handler解析">handler解析</h3>
+<p>关于<strong>handler</strong>拦截属性，有如下：</p>
+<ul>
+<li>
+<p>get(target,propKey,receiver):拦截对象属性的读取</p>
+</li>
+<li>
+<p>set(target,propKey,receiver):拦截对象属性的设置</p>
+</li>
+<li>
+<p>has(target,propKey):拦截<strong>propKey in proxy</strong>的操作，返回一个布尔值</p>
+</li>
+<li>
+<p>deleteProperty:拦截删除操作，返回一个布尔值</p>
+</li>
+</ul>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[JS应知应会]]></title>
+        <id>https://benbende41.github.io/post/js-ying-zhi-ying-hui/</id>
+        <link href="https://benbende41.github.io/post/js-ying-zhi-ying-hui/">
+        </link>
+        <updated>2022-12-29T05:36:32.000Z</updated>
+        <content type="html"><![CDATA[<h1 id="js应知应会">js应知应会</h1>
+<h2 id="配置路径">配置@路径</h2>
+<p>vite.config.js</p>
+<pre><code>import { defineConfig } from &quot;vite&quot;;
+import vue from &quot;@vitejs/plugin-vue&quot;;
+import { resolve } from &quot;path&quot;;
+import AutoImport from &quot;unplugin-auto-import/vite&quot;; //vue3自动导入
+import Components from &quot;unplugin-vue-components/vite&quot;;//组件自动导入
+import { ElementPlusResolver } from &quot;unplugin-vue-components/resolvers&quot;;//elementPlus组件自动导入
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [
+    vue(),
+    AutoImport({ imports: [&quot;vue&quot;, &quot;vue-router&quot;], dts: true }),
+    Components({
+      resolvers: [ElementPlusResolver()],
+    }),
+  ],
+  resolve: {
+    alias: {
+      &quot;@&quot;: resolve(__dirname, &quot;src&quot;), //路径别名
+    },
+    extensions: [&quot;.js&quot;, &quot;.json&quot;, &quot;.ts&quot;, &quot;.vue&quot;], //使用路径别名时想要省略的后缀名，可以自己增减
+  },
+});
+</code></pre>
+<h2 id="前后端实现动态路由">前后端实现动态路由</h2>
+<h2 id="开启后端服务器">开启后端服务器：</h2>
+<h3 id="总体思路">总体思路：</h3>
+<p>就是要根据前端用户的uid向后端发起请求，后端直接从表里取出来传给我们对应的路由父子级数据，再由前端整合成树</p>
+<p>koa2 npm i koa-generator -g</p>
+<p>koa project-name</p>
+<p>cd project-name</p>
+<p>npm i</p>
+<p>npm i koa2-cors -s 解决跨域插件</p>
+<p>npm run dev 启动后端服务器</p>
+<h3 id="后端实现动态路由mock模拟实现">后端实现动态路由（mock模拟实现）：</h3>
+<h4 id="路由权限">路由权限：</h4>
+<p>1/ uid-&gt;后端API - 路由权限API</p>
+<p>2/ 后端-&gt;用户对应路由权限列表-&gt;前端-&gt;JSON</p>
+<p>3/JSON-&gt;树形结构化</p>
+<p>4/属性结构化的数据-&gt;vue路由解构</p>
+<p>5/路由结构动态-&gt;静态路由</p>
+<p>6/树形结构化的数据-&gt;菜单组件</p>
+<p>[</p>
+<p>{</p>
+<p>id:2,</p>
+<p>pid:,</p>
+<p>path:,</p>
+<p>name:,</p>
+<p>link:,</p>
+<p>title:</p>
+<p>}</p>
+<p>]</p>
+<p>解决跨域(server)：</p>
+<pre><code>app.js
+const cors = require('koa2-cors')//引入解决跨域的插件
+
+//...
+
+
+app.use(cors({
+    origin:function(ctx){
+        return 'http://localhost:8080'
+}
+}))
+</code></pre>
+<p>获取请求人的uid</p>
+<pre><code>routes index.js
+
+
+router.get('/user_router_auth',async(ctx,next)=&gt;{
+    const{uid}=ctx.body.request
+    if(uid){
+    let authRouterInfo=[]
+    }else{
+    next()
+}
+})
+</code></pre>
+<p>模拟请求人的数据</p>
+<pre><code>//data -&gt; user.js
+moudle.exports=[
+    {
+    id:1,
+    name:'zhangsan',
+    auth:[]
+    },{
+    id:2,
+    name:'list',
+    auth:[]
+    },
+    {
+    id:3,
+    name:'list',
+    auth:[]
+    },
+
+]
+</code></pre>
+<h3 id="前端实现动态路由">前端实现动态路由：</h3>
+<h2 id="ajaxasync-javascript-and-xml">AJAX（async javascript and XML）</h2>
+<p>首先AJAX是为了实现不刷新整个页面也能获得服务器数据去通过javascript更新DOM，</p>
+<p>AJAX的通信流程，客户端创建xmlHttpRequest对象，通过对象中的数据，向互联网发送数据，再通过互联网到服务器，服务器根据对象响应数据到互联网再到客户端，客户端使用响应的数据通过js更新DOM</p>
+<pre><code>const xhr = new XMLHttpRequest()
+/**
+ * @params 请求方法
+ * @params 请求地址
+ * 
+ */
+
+
+xhr.onreadystatechange = (e) =&gt; { 
+    if (xhr.readyState === 4) { //整个请求完毕
+        if (xhr.status &gt;= 200 &amp;&amp; xhr.status &lt;= 300) {
+            console.log(xhr.responseText);//服务端返回的结果
+        } else if (xhr.status&gt;=400) { 
+            console.log('错误信息'+xhr.status);
+        }
+    }
+}
+
+xhr.open('get','http://xxxxxx')
+
+xhr.send()
+</code></pre>
+<ul>
+<li>
+<p><code>method</code>：表示当前的请求方式，常见的有<code>GET</code>、<code>POST</code></p>
+</li>
+<li>
+<p><code>url</code>：服务端地址</p>
+</li>
+<li>
+<p><code>async</code>：布尔值，表示是否异步执行操作，默认为<code>true</code></p>
+</li>
+<li>
+<p><code>user</code>: 可选的用户名用于认证用途；默认为`null</p>
+</li>
+<li>
+<p><code>password</code>: 可选的密码用于认证用途，默认为`null</p>
+</li>
+</ul>
+<p>通过xhr.readystate可以获得ajax响应的状态0(unsent),1(opended),2(header_recived),3(lofing),4(done)</p>
+<h3 id="封装ajax">封装ajax</h3>
+<pre><code>//封装一个ajax对象
+function ajax(options) { 
+    const xhr = new XMLHttpRequest()
+
+
+    //初始化参数内容
+    options = options || {}
+    options.type = (options.type || 'GET').toUpperCase()
+    options.dataType = options.dataType || 'json'
+    const params = options.data
+
+    //发送请求
+    if (options.type === 'GET') {
+        xhr.open('GET', options.url + '?' + params, true)//true 的意思是异步请求
+        xhr.send(null)
+    } else if (options.type ==='POST') { 
+        xhr.open('POST', options.url, true)
+        xhr.send(params)
+    }
+
+    //接收请求
+    xhr.onreadystatechange = (e) =&gt; { 
+        if (xhr.readyState===4) { 
+            let status = xhr.status
+            if (status &gt;= 200 &amp;&amp; status &lt;= 300) {
+               options.success &amp;&amp; options.success(xhr.responseText, xhr.responseXML)
+            } else { 
+               options.fail &amp;&amp; options.fail(status)
+            }
+        }
+    }
+}
+</code></pre>
+<h2 id="函数闭包">函数闭包</h2>
+<p>是什么：闭包可以让你在一个内层函数中访问到外层函数的作用域</p>
+<p>主要作用：创建私有变量，延长变量生命周期</p>
+<pre><code>function myname(){
+    let name= 'herbert'
+    function ca(){
+    alert(name)
+}
+ca()
+}
+</code></pre>
+<h3 id="函数柯里化">函数柯里化</h3>
+<pre><code>//计算面积
+
+function getArea(width){
+    return height=&gt;{
+    return height*width
+}
+}
+</code></pre>
+<p>如果不是某些特定任务需要闭包，在其他函数中创建函数是不明智的，应为必报的处理速度和内存消耗方面对脚本性能有负面影响</p>
+<h2 id="typeof-instanceof-objectprototypetostringcalldata">typeof instanceof Object.prototype.toString.call(data)</h2>
+<p>判断数据类型</p>
+<p>typeof可以判断简单数据类型但是判断null的时候会返回object这是远古bug</p>
+<p>instanceof可以判断复杂数据类型，是用于检测构造函数的prototype属性是否出现再某个实例对象的原型链上，可以准确的判断复杂引用数据类型，但是不能正确判断基础数据类型</p>
+<p>如果需要通用的检测数据类型可以采用Object.prototype.toString.call(data) 统一返回格式[object xxx]的字符串</p>
+<h2 id="事件代理事件委托">事件代理（事件委托）</h2>
+<p>通俗的讲，将一个元素响应事件的函数委托到另一个元素</p>
+<p>事件流的都会经过三个阶段：捕获阶段 -&gt; 目标阶段 -&gt; 冒泡阶段，而事件委托就是在冒泡阶段完成</p>
+<p>事件委托，会把一个或者一组元素的事件委托到它的父层或者更外层元素上，真正绑定事件的是外层元素，而不是目标元素</p>
+<p>当事件响应到目标元素上时，会通过事件冒泡机制从而触发它的外层元素的绑定事件上，然后在外层元素上去执行函数</p>
+<pre><code>const bBtn = document.getElementById(&quot;btn&quot;)
+const oUl = document.getElementById(&quot;ul1&quot;);
+const num=4
+
+//事件委托，添加子元素的事件
+oUl.onclick = function(ev){
+    ev=ev||window.event;
+    const target = ev.target || ev.srcElement
+    if(target.nodeName.toLowerCase == 'li'){
+        console.log('thr content is : ',target.innerHtml)
+}
+}
+
+//添加新节点
+oBtn.onclick=funtion(){
+    num++;
+    const oLi = document.createElement('li')
+    oLi.innerHtml=`item${num}`
+    oUl.appendChild(oLi)
+}
+</code></pre>
+<h2 id="new操作符具体都干了什么">new操作符具体都干了什么</h2>
+<ul>
+<li>
+<p>创建一个新的对象</p>
+</li>
+<li>
+<p>将对象与构造函数通过原型链连接起来</p>
+</li>
+<li>
+<p>将构造函数中的this绑定到新建的对象obj上</p>
+</li>
+<li>
+<p>根据构建函数返回类型做判断，如果是原始值则被忽略，如果是返回对象则需要正常处理</p>
+</li>
+</ul>
+<h2 id="事件循环">事件循环</h2>
+<p>宏任务和微任务，任务队列</p>
+<p>宏任务队列先执行，执行结束后判断有无微任务，如果有微任务就执行微任务，如果没有就开始执行新的宏任务</p>
+<h2 id="正则表达式">正则表达式</h2>
+<pre><code>const regxp = '/\d/g'
+</code></pre>
+<h2 id="call-bind-apply三者之间的区别">call bind apply三者之间的区别</h2>
+<ul>
+<li>
+<p>三者都可以改变函数的this指向</p>
+</li>
+<li>
+<p>三者第一个参数都是this要指向的对象，如果没有这个参数或者参数为null或undefined则默认指向全局window</p>
+</li>
+<li>
+<p>三者都可以传参，但是apply接收的数组，而call和bind都是参数列表，apply和call都是一次性传入参数，而bind可以分为多次传入</p>
+</li>
+<li>
+<p>bind 是返回绑定this之后的函数，apply,call则是立即执行</p>
+</li>
+</ul>
+<h2 id="dom理解以及常见操作">DOM理解以及常见操作</h2>
+<p>文档对象模型 是HTML和XML文档的编程接口，定义了一种方式让我们可以从程序中对文档结构进行访问，从而改变文档结构，样式以及内容</p>
+<p>元素节点 ，文本节点，属性节点</p>
+<h3 id="dom操作">DOM操作</h3>
+<h4 id="创建节点">创建节点</h4>
+<ul>
+<li>创建一个元素节点</li>
+</ul>
+<p>document.createElement('div')</p>
+<ul>
+<li>创建一个文本节点</li>
+</ul>
+<p>document.createTextNode(&quot;content&quot;)</p>
+<ul>
+<li>创建文档碎片 （createDocumentFragment）</li>
+</ul>
+<p>用来创建一个文档碎片，表示一种轻量级的文档，主要是用来存储临时节点，然后把文档碎片的内容一次性添加到DOM中</p>
+<p>document.createDocumentFrament()</p>
+<ul>
+<li>
+<p>创建属性节点</p>
+<p>document.createAttribute('custom')</p>
+</li>
+</ul>
+<h4 id="获取节点">获取节点</h4>
+<ul>
+<li>
+<p>querySeletor</p>
+</li>
+<li>
+<p>querySeletorAll</p>
+</li>
+</ul>
+<h4 id="更新节点">更新节点</h4>
+<ul>
+<li>innerHTML</li>
+</ul>
+<p>不但可以修改一个DOM节点的文本内容，还可以直接通过HTML代码片段来修改DOM节点内部的子树</p>
+<ul>
+<li>
+<p>innerText</p>
+</li>
+<li>
+<p>textContent</p>
+<p>自动对字符串进行html编码，保证无法设置任何HTML标签</p>
+<p>两者的区别在于读取属性时，innerText不反悔隐藏元素的文本，而textContent返回所有文本</p>
+</li>
+</ul>
+<h4 id="添加节点">添加节点</h4>
+<ul>
+<li>
+<p>innerHTML</p>
+</li>
+<li>
+<p>appendChild</p>
+<p>把一个子节点添加到父节点的最后一个子节点</p>
+</li>
+<li>
+<p>setAttribute</p>
+<p>再指定元素中添加一个属性节点，如果有值则覆盖</p>
+</li>
+</ul>
+<h4 id="删除节点">删除节点</h4>
+<p>父节点.removeChild()</p>
+<h2 id="递归和尾递归">递归和尾递归</h2>
+<p>在数学与计算机科学中，是指在函数的定义中使用函数自身的方法</p>
+<p>在函数内部可以调用其他函数，如果一个函数在内部调用自身，这个函数就是递归函数</p>
+<p>一般来说递归需要有边界条件，递归前进阶段和递归返回阶段，当边界条件不满足时，递归前进，边界条件满足时递归返回</p>
+<ul>
+<li>
+<p>尾递归</p>
+<p>在尾部调用函数自身</p>
+<p>可通过优化，使得计算仅占用常量栈空间</p>
+</li>
+</ul>
+<h2 id="axios的二次封装">Axios的二次封装</h2>
+<p>axios是一个轻量的http客户端</p>
+<p>基于XMLHttpRequest服务来执行http请求，支持Promise,支持浏览器和node端</p>
+<p>特性</p>
+<ul>
+<li>
+<p>从浏览器中创建XMLHttpRequest</p>
+</li>
+<li>
+<p>从node.js创建http请求</p>
+</li>
+<li>
+<p>支持PromiseAPI</p>
+</li>
+<li>
+<p>拦截请求和响应</p>
+</li>
+<li>
+<p>转换请求数据和响应数据</p>
+</li>
+<li>
+<p>取消请求</p>
+</li>
+<li>
+<p>自动转换JSON数据</p>
+</li>
+<li>
+<p>客户端支持防御XSRF</p>
+</li>
+</ul>
+<h3 id="发送请求">发送请求</h3>
+<pre><code>//项目中安装
+yarn add axios -S
+
+
+//导入
+import axios from 'axios'
+
+
+//发送请求、
+axios({
+    url:'xxx',//设置请求的地址
+    method:'GET',//设置请求的方法
+    params:{ //get请求使用params进行参数凭借，如果是post请求用data
+     type:'',
+     page:1   
+    }
+}).then(res=&gt;{
+    console.log(res)
+})
+</code></pre>
+<h3 id="并发请求">并发请求</h3>
+<p>axios.all([])</p>
+<pre><code>function getUserAccount(){
+    return axios.get('/user/123456')
+}
+
+
+function getUserPermissions(){
+    return axios.get('/user/123456/permissions')
+}
+
+
+axios.all([getUserAccount(),getUserPermissions()]).then(axios.spread(function(res1,res2){
+    //res1第一个请求返回的内容，res2第二个请求返回的内容
+    //两个请求都执行完成才会执行
+}))
+</code></pre>
+<h3 id="为什么要封装axios">为什么要封装axios</h3>
+<p>axios的API很友好，你完全可以很轻松的在项目中直接使用</p>
+<p>不过随着项目规模的增大。如果每发起一次http请求，就要把这些比如设置超时事件，设置请求头，根据项目环境判断使用哪个请求地址，错误的处理等等操作都需要写一遍</p>
+<p>这种重复劳动不仅浪费时间而且让代码变得冗余，难以维护。为了提高我们的代码质量，我们应该在项目中二次封装一下axios再使用</p>
+<pre><code>axios('http://localhost:3000/data',{
+    //配置代码
+    method:'GET',
+    timeout:1000,
+    withCredentials:true,
+    headers:{
+        'Content-Type':'application/json',
+        Authorization:'xxx'    
+    },
+    transformRequest:[function (data,headers){
+    return data
+    }],
+    //其他请求配置
+}).then(data=&gt;{
+    //todo:真正的逻辑代码
+    console.log(data)
+}).catch(err=&gt;{
+    //错误处理代码
+    if（err.response.status===401）{
+        // handle authorization error 认证错误
+    }
+    if(err.response.status === 403){
+        // handle server forbidden error 服务器错误
+    }
+
+    //其他错误处理。。。
+})
+</code></pre>
+<h3 id="如何二次封装axios">如何二次封装axios</h3>
+<p>封装的同时，你需要和后端协商一些约定，请求头，状态码，请求超过时间等等</p>
+<ul>
+<li>
+<p>设置接口请求前缀：根据开发，测试，生产环境的不同，前缀往往需要加以区分</p>
+</li>
+<li>
+<p>请求头：来实现一些具体的业务，必须携带一些参数才可以请求（例如：会员业务）</p>
+</li>
+<li>
+<p>状态码：根据接口返回不同的status，来执行不同的业务，这需要和后端约定好</p>
+</li>
+<li>
+<p>请求方法：根据get,post等方法进行一个再次封装，使用起来方便</p>
+</li>
+<li>
+<p>请求拦截器：根据请求的请求头设定，来决定那些请求可以访问</p>
+</li>
+<li>
+<p>响应拦截器：这块就是根据后端返回来的状态码判定执行不同的业务</p>
+</li>
+</ul>
+<h4 id="设置接口请求前缀">设置接口请求前缀</h4>
+<p>利用node环境变量来作判断，用来区分开发，测试，生产环境</p>
+<pre><code>if(process.env.NODE_ENV==='development'){
+    axios.defaults.baseURL='http://dev.xxx.com'
+}else if(process.env.NODE_ENV==='production'){
+    axios.defaults.baseURL='http://prod.xxx.com'
+}
+</code></pre>
+<p>在本地调试的时候，还需要在vue.config.js文件中配置<strong>devServer</strong>实现代理转发，或者vite.config.js中配置<strong>proxy</strong> 从而实现跨域</p>
+<pre><code>devServer:{
+    proxy:{
+    '/proxyApi':{
+        target:'http://dev.xxx.com',
+        changeOrigin:true,
+    pathRewrite:{
+    '/proxyApi':''
+        }
+      }
+   }
+}
+</code></pre>
+<h4 id="设置请求头与超时时间">设置请求头与超时时间</h4>
+<p>大部分情况下，请求头都是固定的，只有少部分情况会需要一些特殊的请求头，这里将普适性的请求头作为基础配置，当需要特殊请求头时，将特殊请求头作为参数传入，覆盖基础配置</p>
+<pre><code>// 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
+
+const service = axios.create({
+    ...
+    timeout:30000,//请求30s超时    
+    headers:{
+        get:{
+            'Content-Type':'application/x-www-form-urlencoded;charset=utf-8'
+            //在开发中，一般还需要打你但登录或者其他功能通用的请求头，可以一并配置进来
+        }，
+        post:{
+            'Content-Type':'application/json;charset=utf-8'
+        }
+    }
+})
+</code></pre>
+<h4 id="封装请求方法">封装请求方法</h4>
+<p>先引入封装好的方法，在要调用的接口重新封装一个方法暴露出去</p>
+<pre><code>//get 请求
+export function httpGet({
+    url,
+    params={}
+}){
+    return new Promise((resolve,reject)=&gt;{
+        axios.get(url,{
+        params
+    }).then(res=&gt;{
+        resolve(res.data)
+    }).catch(err=&gt;{
+    reject(err)
+    })
+    })
+}
+
+
+
+// post
+// post请求
+export function httpPost({
+  url,
+  data = {},
+  params = {}
+}) {
+  return new Promise((resolve, reject) =&gt; {
+    axios({
+      url,
+      method: 'post',
+      transformRequest: [function (data) {
+        let ret = ''
+        for (let it in data) {
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&amp;'
+        }
+        return ret
+      }],
+      // 发送的数据
+      data,
+      // url参数
+      params
+
+    }).then(res =&gt; {
+      resolve(res.data)
+    })
+  })
+}
+</code></pre>
+<p>把封装的方法放在一个api.js文件中</p>
+<pre><code>import {httpGrt,httpPost} from './http'
+export const getorglist = (params={})=&gt;httpGet({url:'apps/api/org/list',params})
+</code></pre>
+<p>页面中就能直接调用</p>
+<pre><code>//.vue
+import {getorglist} from '@/assets/js/api'
+
+
+getorglist({id:200}).then(res=&gt;{
+    console.log(res)
+})
+</code></pre>
+<p>这样可以把api统一管理起来，以后维护修改只需要在api.js文件操作即可</p>
+<h4 id="请求拦截器">请求拦截器</h4>
+<p>请求拦截器可以在每个请求里加上token,做了同意处理后维护起来也方便</p>
+<pre><code>//请求拦截器
+axios.interceptors.request.use(
+    cpnfig=&gt;{
+    //每次发送请求之前判断是否存在token
+    //如果存在，则同意在http请求的header都加上token,这样后台根据token判断你的登陆情况,此处token一般是用户登陆后存储到localstorage里的
+    token  &amp;&amp; (config.headers.Authorization=token)
+    return config
+    },
+    error =&gt;{
+    reyurn Promise.error(error)
+    }
+)
+</code></pre>
+<h4 id="响应拦截器">响应拦截器</h4>
+<p>响应拦截器可以在接受到响应后先做一层操作，如根据状态码判断登录状态，授权</p>
+<pre><code>//响应拦截器
+axios.interceptors.response.use(response=&gt;{
+    //如果返回的状态码为200，说明接口请求成功，可以正常拿到数据
+    //否则的话抛出错误
+    if(response.status===200){
+        if(response.data.code ===511){
+            //未授权调取授权接口
+        }else if(response.data.code===510){
+            //未登录跳转登录页
+        }else{
+            return Promise.resolve(response)
+        }
+    }else{
+        return Promise.reject(response)
+    }
+},error=&gt;{
+    //我们可以在这里对异常状态作统一处理
+    if(error.response.status){
+    //处理请求失败的情况
+    //对不同的返回码做相应的处理
+    return Promise.reject(error.response)
+    }
+})
+</code></pre>
+<h4 id="小结">小结</h4>
+<ul>
+<li>
+<p>封装是编程中很有意义的手段，简单的axios封装，就可以让我们领略到它的魅力</p>
+</li>
+<li>
+<p>封装axios没有一个绝对的标准，只要你的封装可以满足你的项目需求，并且用起来很方便，那就是一个好的封装方案</p>
+</li>
+</ul>
+<h2 id="js中本地存储的方式有哪些区别以及应用场景">JS中本地存储的方式有哪些，区别以及应用场景</h2>
+<h3 id="方式">方式</h3>
+<ul>
+<li>
+<p>cookie</p>
+</li>
+<li>
+<p>sessionStorage</p>
+</li>
+<li>
+<p>localStorage</p>
+</li>
+<li>
+<p>indexedDB</p>
+</li>
+</ul>
+<h4 id="cookie">cookie</h4>
+<p>类型为<strong>小型文本文件</strong>，指某些网站为了辨别用户身份而储存在用户本地终端上的数据。是为了解决HTTP无状态导致的问题</p>
+<p>作为一段一般不超过4kb的小型文本数据，它由一个名称（Name）,一个值（Value）和其他几个用于控制cookie有效期，安全性，适用范围的可选属性组成</p>
+<p>但是cookie在每次请求中都会被发送，如果不使用HTTPS对其加密，其保存的信息很容易被窃取，导致安全风险</p>
+<h1 id="css-应知应会">css 应知应会</h1>
+<h2 id="如何将超出部分进行省略号省略">如何将超出部分进行省略号省略</h2>
+<pre><code>*{
+      display: -webkit-box;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+}
+</code></pre>
+<h2 id="如何实现边框从中间向两边动画过渡得效果">如何实现边框从中间向两边动画过渡得效果</h2>
+<pre><code>.nav {
+    width: 130px;
+    height: 40px;
+    text-align: center;
+    line-height: 40px;
+    position: relative;
+
+  }
+  //移动端没有hover,所以看不到hover得效果
+   .nav::before{
+      content: &quot;&quot;;
+      display: block;
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      width: 0%;
+      height: 3px;
+      border-radius: 3px;
+      background-color: rgb(212, 60, 51);
+      transition: .3s ease;
+    }
+    .nav:hover::before{
+      width: 100%;
+      left: 0;
+    }
+</code></pre>
+]]></content>
+    </entry>
+</feed>
